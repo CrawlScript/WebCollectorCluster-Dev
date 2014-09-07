@@ -19,7 +19,7 @@ public class HttpResponse implements Response{
 
     public URL url;
     public int code;
-    public Map<String,List<String>> headers;
+    public Map<String,List<String>> headers=null;
     public byte[] content=null;
     
     public HttpResponse(URL url){

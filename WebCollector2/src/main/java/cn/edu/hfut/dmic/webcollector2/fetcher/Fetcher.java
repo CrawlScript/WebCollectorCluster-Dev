@@ -197,7 +197,7 @@ public class Fetcher extends Configured implements Tool,MapRunnable<LongWritable
             totalSize.incrementAndGet();
         }
 
-        public FetchItem getFetchItem() {
+        public synchronized FetchItem getFetchItem() {
             if (queue.size() == 0) {
                 return null;
             }
