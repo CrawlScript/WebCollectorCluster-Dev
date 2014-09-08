@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -86,13 +87,47 @@ public class HttpRequest implements Request{
     }
     
 
-    public static void main(String[] args) throws Exception{
+    public static void test(String[] args) throws MalformedURLException, Exception{
         Request request=RequestFactory.createRequest("http://www.xinhuanet.com");
         CrawlDatum datum=new CrawlDatum();
         Response response=request.getResponse(datum);
         System.out.println("status="+datum.status);
         System.out.println("code="+response.getCode());
         System.out.println(response.getHeaders());
+    }
+    
+    public static void main(String[] args) throws MalformedURLException, IOException{
+        URL url=new URL("http://xautjzd.github.io/dsfasdfsadf");
+      
+        HttpURLConnection con=(HttpURLConnection) url.openConnection();
+        System.out.println("code="+con.getResponseCode());
+        System.out.println(con.getHeaderFields());
+        //System.out.println(con.getURL());
+        
+        InputStream is=con.getErrorStream();
+        //InputStream is=con.getInputStream();
+
+        byte[] buf = new byte[2048];
+        int read;
+        int sum=0;
+        int maxsize=Config.maxsize;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        while ((read = is.read(buf)) != -1) {
+            if(maxsize>0){
+            sum=sum+read;
+                if(sum>maxsize){
+                    read=maxsize-(sum-read);
+                    bos.write(buf, 0, read);                    
+                    break;
+                }
+            }
+            bos.write(buf, 0, read);
+        }
+
+        
+        is.close();     
+        System.out.println(bos.toString("utf-8"));
+        
     }
     
     
