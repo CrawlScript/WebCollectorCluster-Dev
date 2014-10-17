@@ -19,7 +19,6 @@
 package cn.edu.hfut.dmic.webcollectorcluster.generator;
 
 import cn.edu.hfut.dmic.webcollectorcluster.model.CrawlDatum;
-import cn.edu.hfut.dmic.webcollectorcluster.util.Config;
 
 
 /**
@@ -28,12 +27,14 @@ import cn.edu.hfut.dmic.webcollectorcluster.util.Config;
  */
 public class IntervalFilter extends Filter{
 
+    long interval;
     /**
      * 构造一个时间间隔过滤器
      * @param generator 嵌套的任务生成器
      */
-    public IntervalFilter(Generator generator) {
+    public IntervalFilter(Generator generator,long interval) {
         super(generator);
+        this.interval=interval;
     }
 
     /**
@@ -59,15 +60,17 @@ public class IntervalFilter extends Filter{
         if(crawldatum.getStatus()==CrawlDatum.STATUS_DB_UNFETCHED){
             return crawldatum;
         }
-        if(Config.interval==-1){
+       
+        if(interval==-1){
             continue;
         }
        
         Long lasttime=crawldatum.getFetchTime();
-        if(lasttime+Config.interval>System.currentTimeMillis()){
+        if(lasttime+interval>System.currentTimeMillis()){
             continue;
         }
         return crawldatum;
+                
         }
     }
 

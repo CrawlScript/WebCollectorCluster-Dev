@@ -104,6 +104,22 @@
                 </configuration>
 
             </plugin> 
+            
+              <plugin>
+
+     <artifactId>maven-assembly-plugin</artifactId>
+
+     <configuration>
+
+       <descriptorRefs>
+
+	<descriptorRef>jar-with-dependencies</descriptorRef>
+
+       </descriptorRefs>
+
+     </configuration>
+
+   </plugin>
             <!--
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
@@ -153,11 +169,12 @@
         </dependency>
         
         
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
-            <version>1.2.1</version>
-        </dependency>
+       <dependency>
+	<groupId>org.apache.hadoop</groupId>
+	<artifactId>hadoop-core</artifactId>
+	<version>1.2.0</version>
+</dependency>
+
     
 
         

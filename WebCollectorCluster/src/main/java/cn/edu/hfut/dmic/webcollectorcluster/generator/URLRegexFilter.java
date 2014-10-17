@@ -19,13 +19,13 @@ public class URLRegexFilter extends Filter{
    private ArrayList<String> positive = new ArrayList<String>();
     private ArrayList<String> negative = new ArrayList<String>();
 
-    public static  ArrayList<String>  rules=new ArrayList<String>();
+    //public static  ArrayList<String>  rules=new ArrayList<String>();
     /**
      * 根据正则规则列表，生成正则规则过滤器
      * @param generator 嵌套的任务生成器
      * @param rules 正则规则列表
      */
-    public URLRegexFilter(Generator generator) {
+    public URLRegexFilter(Generator generator,ArrayList<String> rules) {
         super(generator);
         for (String rule : rules) {
             addRule(rule);

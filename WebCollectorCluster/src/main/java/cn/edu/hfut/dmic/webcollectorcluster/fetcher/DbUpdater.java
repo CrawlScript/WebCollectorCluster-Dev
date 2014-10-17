@@ -7,6 +7,7 @@
 package cn.edu.hfut.dmic.webcollectorcluster.fetcher;
 
 import cn.edu.hfut.dmic.webcollectorcluster.generator.Merge;
+import cn.edu.hfut.dmic.webcollectorcluster.util.CrawlerConfiguration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
@@ -23,11 +24,12 @@ public class DbUpdater extends Configured implements Tool{
         
         Path crawldb=new Path(args[0]);
         Path segmentPath=new Path(args[1]);
-        Job job=Merge.createJob(crawldb);
+        Job job=Merge.createJob(CrawlerConfiguration.create(),crawldb);
+        job.setJarByClass(DbUpdater.class);
         org.apache.hadoop.mapreduce.lib.input.FileInputFormat.addInputPath(job, new Path(segmentPath,"fetch"));
         org.apache.hadoop.mapreduce.lib.input.FileInputFormat.addInputPath(job, new Path(segmentPath,"parse_temp"));
         job.waitForCompletion(true);
-        Merge.install(job, crawldb);
+        Merge.install(crawldb);
         return 0;
     }
     

@@ -82,7 +82,7 @@ public class HtmlParser implements Parser {
     private ArrayList<Link> topNFilter(ArrayList<Link> origin_links) {
         ArrayList<Link> result=new ArrayList<Link>();
         int updatesize;
-        if (topN == null) {
+        if (topN<0) {
             updatesize = origin_links.size();
         } else {
             updatesize = Math.min(topN, origin_links.size());

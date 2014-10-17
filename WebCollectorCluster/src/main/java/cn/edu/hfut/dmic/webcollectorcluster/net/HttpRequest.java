@@ -21,6 +21,7 @@ package cn.edu.hfut.dmic.webcollectorcluster.net;
 import cn.edu.hfut.dmic.webcollectorcluster.model.CrawlDatum;
 import cn.edu.hfut.dmic.webcollectorcluster.util.Config;
 import cn.edu.hfut.dmic.webcollectorcluster.util.ConnectionConfig;
+import cn.edu.hfut.dmic.webcollectorcluster.util.CrawlerConfiguration;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -35,6 +36,14 @@ import java.net.URL;
  * @author hu
  */
 public class HttpRequest implements Request{
+
+    public int maxsize;
+    public HttpRequest(int maxsize) {
+         this.maxsize=maxsize;
+         
+    }
+    
+    
 
     private URL url=null;
     private Proxy proxy=null;
@@ -80,7 +89,7 @@ public class HttpRequest implements Request{
         byte[] buf = new byte[2048];
         int read;
         int sum=0;
-        int maxsize=Config.maxsize;
+       
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         while ((read = is.read(buf)) != -1) {
             if(maxsize>0){

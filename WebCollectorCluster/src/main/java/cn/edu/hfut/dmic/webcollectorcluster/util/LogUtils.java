@@ -18,8 +18,11 @@
 package cn.edu.hfut.dmic.webcollectorcluster.util;
 
 
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.logging.Level;
 import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
@@ -31,7 +34,11 @@ public class LogUtils {
    
     private static Logger logger=null;
     static{
-        logger=createCommonLogger("default");
+        try {
+            logger=createFileLogger("/home/hu/data/crawlerlog.log");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
    
      public static Logger createCommonLogger(String defaultLogName) {
@@ -43,6 +50,14 @@ public class LogUtils {
         logger.addAppender(ca);
         return logger;
     }
+     
+      public static Logger createFileLogger(String logpath) throws IOException {
+        Logger logger=Logger.getLogger("default");
+        logger.addAppender(new FileAppender(new PatternLayout("%d{yyyy-MM-dd HH:mm:ss} %p %c %x - %m%n "), logpath));
+        
+        return logger;
+    }
+
 
     public static Logger getLogger() {  
         return logger;

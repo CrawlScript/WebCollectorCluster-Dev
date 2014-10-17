@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package cn.edu.hfut.dmic.webcollectorcluster.crawl;
+package cn.edu.hfut.dmic.webcollectorcluster.crawler;
 
 import cn.edu.hfut.dmic.webcollectorcluster.fetcher.DbUpdater;
 import cn.edu.hfut.dmic.webcollectorcluster.fetcher.Fetcher;
@@ -24,11 +24,19 @@ import cn.edu.hfut.dmic.webcollectorcluster.parser.HtmlParser;
 import cn.edu.hfut.dmic.webcollectorcluster.parser.Parser;
 import cn.edu.hfut.dmic.webcollectorcluster.parser.ParserFactory;
 import cn.edu.hfut.dmic.webcollectorcluster.util.Config;
+import cn.edu.hfut.dmic.webcollectorcluster.util.ConnectionConfig;
 import cn.edu.hfut.dmic.webcollectorcluster.util.CrawlerConfiguration;
 import cn.edu.hfut.dmic.webcollectorcluster.util.LogUtils;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.regex.Pattern;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.ToolRunner;
@@ -42,11 +50,11 @@ public class Crawler implements RequestFactory, ParserFactory, HandlerFactory, G
     public Crawler() {
 
     }
-
+    public ArrayList<String> rules = new ArrayList<String>();
     Path crawlDir;
     Path crawldb;
     Path segments;
-    private boolean resumable=false;
+    private boolean resumable = false;
 
     public Crawler(String crawlPath) {
         this.crawlDir = new Path(crawlPath);
@@ -80,8 +88,6 @@ public class Crawler implements RequestFactory, ParserFactory, HandlerFactory, G
         };
         return fetchHandler;
     }
-    
-    
 
     /**
      * 爬取成功时执行的方法
@@ -89,9 +95,8 @@ public class Crawler implements RequestFactory, ParserFactory, HandlerFactory, G
      * @param page 成功爬取的网页/文件
      */
     public void visit(Page page) {
-        
-        
-        System.out.println(page.getDoc().title());
+
+        LogUtils.getLogger().info(page.getDoc().title());
     }
 
     /**
@@ -107,23 +112,22 @@ public class Crawler implements RequestFactory, ParserFactory, HandlerFactory, G
     //private Fetcher fetcher;
 
     public void inject() throws Exception {
-        if(seeds.size()>0){
-        Injector injector = new Injector();
-        injector.inject(crawldb, seeds);
+        if (seeds.size() > 0) {
+            Injector injector = new Injector();
+            injector.inject(crawlDir, seeds);
         }
     }
 
     public void start(int depth) throws Exception {
-        
-        
-        if(!resumable){
-            FileSystem fs=crawlDir.getFileSystem(CrawlerConfiguration.create());
-            if(fs.exists(crawlDir)){
+
+        Configuration conf = CrawlerConfiguration.create();
+        FileSystem fs = crawlDir.getFileSystem(conf);
+
+        if (!resumable) {
+            if (fs.exists(crawlDir)) {
                 fs.delete(crawlDir);
             }
         }
-        
-        
 
         inject();
 
@@ -132,14 +136,10 @@ public class Crawler implements RequestFactory, ParserFactory, HandlerFactory, G
             String segmentName = SegmentUtils.createSegmengName();
             Path segmentPath = new Path(segments, segmentName);
 
-           // ArrayList<String> fetchArgsList=new ArrayList<String>();
-            // fetchArgsList.add(crawldb.toString());
-            //fetchArgsList.add(segmentPath.toString());
-            //fetchArgsList.addAll(regexs);
-            //String[] fetch_args=fetchArgsList.toArray(new String[fetchArgsList.size()]);
+  
             String[] args = new String[]{crawldb.toString(), segmentPath.toString()};
-            ToolRunner.run(new Fetcher(), args);
-            ToolRunner.run(new DbUpdater(), args);
+            ToolRunner.run(CrawlerConfiguration.create(), new Fetcher(), args);
+            ToolRunner.run(CrawlerConfiguration.create(), new DbUpdater(), args);
         }
 
     }
@@ -159,35 +159,57 @@ public class Crawler implements RequestFactory, ParserFactory, HandlerFactory, G
      * @param regex 正则过滤规则
      */
     public void addRegex(String regex) {
-        if (!URLRegexFilter.rules.contains(regex)) {
-            URLRegexFilter.rules.add(regex);
+        if (!rules.contains(regex)) {
+            rules.add(regex);
         }
     }
 
     public static void main(String[] args) throws Exception {
+
+        Crawler crawler = new Crawler("hdfs://localhost:9000/cluster9");
+        //Crawler crawler = new Crawler("/home/hu/data/cluster4");
+        crawler.addSeed("http://www.xinhuanet.com/");
         
-        Config.threads=50;
-        
-        Crawler crawler = new Crawler("/home/hu/data/clustertest1");
-        crawler.addSeed("https://ruby-china.org/");
-        crawler.addRegex("https://ruby-china.org.*");
-        //crawler.addRegex("-http://www.zhihu.com/people.*");
-        //crawler.addRegex("-http://www.zhihu.com/inbox.*");
-        crawler.addRegex("-.*jpg.*");
-        crawler.addRegex("-.*png.*");
-        crawler.addRegex("-.*#.*");
-        crawler.addRegex("-.*gif.*");
-        crawler.addRegex("-.*\\?.*");
         crawler.start(50);
+    }
+
+    Integer maxsize = null;
+    Long interval = null;
+    Integer topN = null;
+
+    public static class CommonConnectionConfig implements ConnectionConfig {
+
+        String userAgent = null;
+        String cookie = null;
+
+        public CommonConnectionConfig() {
+            Configuration conf = CrawlerConfiguration.create();
+            userAgent = conf.get("http.agent.name");
+            cookie = conf.get("http.cookie");
+        }
+
+        @Override
+        public void config(HttpURLConnection con) {
+            if (userAgent != null) {
+                con.setRequestProperty("User-Agent", userAgent);
+            }
+            if (cookie != null) {
+                con.setRequestProperty("Cookie", cookie);
+            }
+        }
+
     }
 
     @Override
     public Request createRequest(String url) throws Exception {
-        HttpRequest request = new HttpRequest();
+        if (maxsize == null) {
+            maxsize = CrawlerConfiguration.create().getInt("http.content.limit", 65535);
+        }
+
+        HttpRequest request = new HttpRequest(maxsize);
         URL _URL = new URL(url);
         request.setURL(_URL);
-        //request.setProxy(proxy);
-        //request.setConnectionConfig(conconfig);
+        request.setConnectionConfig(new CommonConnectionConfig());
         return request;
     }
 
@@ -201,11 +223,15 @@ public class Crawler implements RequestFactory, ParserFactory, HandlerFactory, G
      */
     @Override
     public Parser createParser(String url, String contentType) throws Exception {
+
+        if (topN == null) {
+            topN = CrawlerConfiguration.create().getInt("parser.topN", -1);
+        }
         if (contentType == null) {
             return null;
         }
         if (contentType.contains("text/html")) {
-            return new HtmlParser(Config.topN);
+            return new HtmlParser(topN);
         }
         return null;
     }
@@ -218,9 +244,28 @@ public class Crawler implements RequestFactory, ParserFactory, HandlerFactory, G
      */
     @Override
     public Generator createGenerator(Generator generator) {
-        //Generator g=new URLRegexFilter(new IntervalFilter(generator));
-        //return g;
-        return new URLRegexFilter(new IntervalFilter(generator));
+
+        if (interval == null) {
+            interval = CrawlerConfiguration.create().getLong("generator.interval", -1);
+        }
+        try {
+            Configuration conf = CrawlerConfiguration.create();
+
+            InputStream regexIs = conf.getConfResourceAsInputStream("regex");
+            BufferedReader br = new BufferedReader(new InputStreamReader(regexIs));
+            ArrayList<String> regexRules = new ArrayList<String>();
+            String line;
+            while ((line = br.readLine()) != null) {
+                regexRules.add(line);
+            }
+
+            //return new URLRegexFilter(generator, regexRules);
+            return new URLRegexFilter(new IntervalFilter(generator, interval), regexRules);
+        } catch (Exception ex) {
+            LogUtils.getLogger().info("Exception", ex);
+            return null;
+        }
+
     }
 
     public boolean isResumable() {
@@ -231,6 +276,4 @@ public class Crawler implements RequestFactory, ParserFactory, HandlerFactory, G
         this.resumable = resumable;
     }
 
-    
-    
 }

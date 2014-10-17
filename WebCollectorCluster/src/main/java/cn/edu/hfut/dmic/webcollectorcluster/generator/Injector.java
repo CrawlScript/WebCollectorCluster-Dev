@@ -18,9 +18,7 @@ import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 
 
-
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.util.ToolRunner;
 
 /**
  *
@@ -28,23 +26,25 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
  */
 public class Injector {
 
-    public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
-        Path crawldb = new Path("/home/hu/data/cluster/crawldb");
+    public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException, Exception {
+        Path crawldb = new Path("hdfs://localhost:9000/cluster3");
         Injector injector = new Injector();
         ArrayList<String> urls = new ArrayList<String>();
-        urls.add("http://www.xinhuanet.com/");
-        urls.add("http://www.sina.com");
+        urls.add("https://ruby-china.org/");
+     
         injector.inject(crawldb, urls);
     }
 
-    public void inject(Path crawldb, ArrayList<String> urls) throws IOException, InterruptedException, ClassNotFoundException {
+    public void inject(Path crawlDir, ArrayList<String> urls) throws IOException, InterruptedException, ClassNotFoundException, Exception {
+        Path crawldb=new Path(crawlDir,"crawldb");
         Configuration config = CrawlerConfiguration.create();
+         System.out.println(config.get("mapred.jar"));
         FileSystem fs = crawldb.getFileSystem(config);
         Path tempdb = new Path(crawldb, "temp");
         if (fs.exists(tempdb)) {
             fs.delete(tempdb);
         }
-        //AvroKeyRecordWriter<CrawlDatum> writer=new AvroKeyRecordWriter<CrawlDatum>
+        
         
         SequenceFile.Writer writer=new SequenceFile.Writer(fs, config, new Path(tempdb,"info.avro"), Text.class, CrawlDatum.class);
         for (String url : urls) {
@@ -55,23 +55,12 @@ public class Injector {
             System.out.println("inject:" + url);
         }
         writer.close();
-        /*
-        DbWriter<CrawlDatum> writer;
-        writer = new DbWriter<CrawlDatum>(CrawlDatum.class, new Path(tempdb,"info.avro"), config, fs, false);
-        for (String url : urls) {
-            CrawlDatum crawldatum = new CrawlDatum();
-            crawldatum.setUrl(url);
-            crawldatum.setStatus(CrawlDatum.STATUS_DB_INJECTED);
-            writer.write(crawldatum);
-            System.out.println("inject:" + url);
-        }
-        writer.close();
-*/
-        Job job = Merge.createJob(crawldb);
-        FileInputFormat.addInputPath(job, tempdb);
-
-        job.waitForCompletion(true);
-        Merge.install(job, crawldb);
+       
+     
+        String[] args=new String[]{crawldb.toString(),tempdb.toString()};
+        
+        ToolRunner.run(CrawlerConfiguration.create(), new Merge(),args);
+        Merge.install(crawldb);
         
         if(fs.exists(tempdb)){
             fs.delete(tempdb);

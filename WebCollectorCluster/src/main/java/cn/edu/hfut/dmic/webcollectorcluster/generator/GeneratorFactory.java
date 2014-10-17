@@ -6,6 +6,8 @@
 
 package cn.edu.hfut.dmic.webcollectorcluster.generator;
 
+import org.apache.hadoop.fs.Path;
+
 /**
  *
  * @author hu

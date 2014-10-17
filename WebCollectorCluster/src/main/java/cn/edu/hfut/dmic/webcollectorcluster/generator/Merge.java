@@ -9,6 +9,7 @@ import cn.edu.hfut.dmic.webcollectorcluster.model.CrawlDatum;
 import cn.edu.hfut.dmic.webcollectorcluster.util.CrawlerConfiguration;
 import java.io.IOException;
 import java.util.Iterator;
+import org.apache.hadoop.conf.Configuration;
 
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
@@ -31,20 +32,31 @@ import org.apache.hadoop.util.Tool;
  */
 public class Merge extends Configured implements Tool {
 
+    
+    
+    
     @Override
-    public int run(String[] strings) throws Exception {
-        return -1;
+    public int run(String[] args) throws Exception {
+        
+        Path crawldb=new Path(args[0]);
+        Job job=createJob(getConf(),crawldb);
+        job.setJarByClass(Merge.class);
+        //job.getConfiguration().set("mapred", "/home/hu/mygit/WebCollector2/WebCollectorCluster/target/WebCollectorCluster-2.0.jar");
+        for(int i=1;i<args.length;i++){
+            FileInputFormat.addInputPath(job, new Path(args[i]));
+        }
+        job.waitForCompletion(true);
+                
+        return 0;
+        
     }
 
-    public static Job createJob(Path crawldb) throws IOException {
+    public static Job createJob(Configuration conf,Path crawldb) throws IOException {
 
-        Job job = new Job();
-
-        job.setJarByClass(Merge.class);
-
-        Path newdb = new Path(crawldb, "new");
-        
-        
+        Job job = new Job(conf);
+        //job.setJarByClass(Merge.class);
+        job.getConfiguration().set("mapred", "/home/hu/mygit/WebCollector2/WebCollectorCluster/target/WebCollectorCluster-2.0.jar");
+        Path newdb = new Path(crawldb, "new");                
         Path currentdb = new Path(crawldb, "current");
 
         FileSystem fs = crawldb.getFileSystem(CrawlerConfiguration.create());
@@ -74,7 +86,7 @@ public class Merge extends Configured implements Tool {
         return job;
     }
 
-    public static void install(Job job, Path crawldb) throws IOException {
+    public static void install(Path crawldb) throws IOException {
         FileSystem fs = crawldb.getFileSystem(CrawlerConfiguration.create());
         Path newdb = new Path(crawldb, "new");
         Path currentdb = new Path(crawldb, "current");

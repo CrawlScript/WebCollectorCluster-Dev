@@ -17,8 +17,13 @@ public class CrawlerConfiguration {
     public static Configuration create(){
          Configuration conf=new Configuration();
          conf.addResource("crawler-default.xml");
+         conf.addResource("core-site.xml");
+         conf.addResource("hdfs-site.xml");
+         conf.addResource("mapred-site.xml");
+         //conf.set("mapred.jar", "/home/hu/mygit/WebCollector2/WebCollectorCluster/target/WebCollectorCluster-2.0.jar");
          return conf;
     }
+    
     
     
 }

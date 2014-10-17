@@ -5,7 +5,6 @@
  */
 package cn.edu.hfut.dmic.webcollectorcluster.fetcher;
 
-
 import cn.edu.hfut.dmic.webcollectorcluster.model.Content;
 import cn.edu.hfut.dmic.webcollectorcluster.model.CrawlDatum;
 import cn.edu.hfut.dmic.webcollectorcluster.model.Link;
@@ -39,15 +38,11 @@ public class FetcherOutputFormat implements OutputFormat<Text, WebWritable> {
         Path contentPath = new Path(outputPath, "content/info");
         Path parseDataPath = new Path(outputPath, "parse_data/info");
         Path parseTempPath = new Path(outputPath, "parse_temp/info");
-
-        final SequenceFile.Writer fetchOut=new SequenceFile.Writer(fs, conf, fetchPath, Text.class, CrawlDatum.class);
-        final SequenceFile.Writer contentOut=new SequenceFile.Writer(fs, conf, contentPath, Text.class, Content.class);
-        final SequenceFile.Writer parseDataOut=new SequenceFile.Writer(fs, conf, parseDataPath, Text.class, ParseData.class);
-        final SequenceFile.Writer parseTempOut=new SequenceFile.Writer(fs, conf, parseTempPath, Text.class, CrawlDatum.class);
-       
-       
+        final SequenceFile.Writer fetchOut = new SequenceFile.Writer(fs, conf, fetchPath, Text.class, CrawlDatum.class);
+        final SequenceFile.Writer contentOut = new SequenceFile.Writer(fs, conf, contentPath, Text.class, Content.class);
+        final SequenceFile.Writer parseDataOut = new SequenceFile.Writer(fs, conf, parseDataPath, Text.class, ParseData.class);
+        final SequenceFile.Writer parseTempOut = new SequenceFile.Writer(fs, conf, parseTempPath, Text.class, CrawlDatum.class);
         return new RecordWriter<Text, WebWritable>() {
-
             @Override
             public void write(Text key, WebWritable value) throws IOException {
                 Writable w = value.get();
@@ -55,12 +50,12 @@ public class FetcherOutputFormat implements OutputFormat<Text, WebWritable> {
                     fetchOut.append(key, w);
                 } else if (w instanceof Content) {
                     contentOut.append(key, w);
-                } else if(w instanceof ParseData){
+                } else if (w instanceof ParseData) {
                     parseDataOut.append(key, w);
-                    ParseData parseData=(ParseData) w;
-                    if(parseData.getLinks()!=null){
-                        for(Link link:parseData.getLinks()){
-                            CrawlDatum datum=new CrawlDatum();
+                    ParseData parseData = (ParseData) w;
+                    if (parseData.getLinks() != null) {
+                        for (Link link : parseData.getLinks()) {
+                            CrawlDatum datum = new CrawlDatum();
                             datum.setUrl(link.getUrl());
                             datum.setStatus(CrawlDatum.STATUS_DB_UNFETCHED);
                             datum.setFetchTime(CrawlDatum.FETCHTIME_UNDEFINED);
@@ -77,13 +72,10 @@ public class FetcherOutputFormat implements OutputFormat<Text, WebWritable> {
                 parseDataOut.close();
                 parseTempOut.close();
             }
-
         };
-
     }
 
     @Override
     public void checkOutputSpecs(FileSystem fs, JobConf jc) throws IOException {
     }
-
 }
