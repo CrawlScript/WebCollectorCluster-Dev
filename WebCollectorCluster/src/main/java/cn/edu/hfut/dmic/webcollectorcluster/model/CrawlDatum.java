@@ -22,7 +22,7 @@ package cn.edu.hfut.dmic.webcollectorcluster.model;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import org.apache.avro.reflect.Nullable;
+
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
@@ -59,9 +59,9 @@ public class CrawlDatum implements Writable{
     
     
     
-    @Nullable private String url;
-    @Nullable private int status=CrawlDatum.STATUS_DB_UNDEFINED;
-    @Nullable private long fetchTime=CrawlDatum.FETCHTIME_UNDEFINED;
+    private String url;
+    private int status=CrawlDatum.STATUS_DB_UNDEFINED;
+    private long fetchTime=CrawlDatum.FETCHTIME_UNDEFINED;
 
     /**
      *  获取爬取任务的url

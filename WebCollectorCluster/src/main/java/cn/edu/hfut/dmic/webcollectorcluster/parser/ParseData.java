@@ -24,7 +24,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import org.apache.avro.reflect.Nullable;
+
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
@@ -36,13 +36,13 @@ import org.apache.hadoop.io.Writable;
  * @author hu
  */
 public class ParseData implements Writable{
-    @Nullable 
+   
     private String url;
-    @Nullable
+   
     private String title;
-    @Nullable
+   
     private ArrayList<Link> links;
-    @Nullable
+    
     private HashMap<String,String> parseMap=new HashMap<String, String>();
     
     public ParseData(){

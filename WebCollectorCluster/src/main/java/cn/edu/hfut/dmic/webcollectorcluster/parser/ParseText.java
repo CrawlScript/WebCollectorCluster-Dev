@@ -21,7 +21,6 @@ package cn.edu.hfut.dmic.webcollectorcluster.parser;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import org.apache.avro.reflect.Nullable;
 import org.apache.hadoop.io.Writable;
 
 /**
@@ -29,9 +28,9 @@ import org.apache.hadoop.io.Writable;
  * @author hu
  */
 public class ParseText implements Writable{
-    @Nullable
+   
     private String url=null;
-    @Nullable
+   
     private String text=null;
     
     public ParseText(){
