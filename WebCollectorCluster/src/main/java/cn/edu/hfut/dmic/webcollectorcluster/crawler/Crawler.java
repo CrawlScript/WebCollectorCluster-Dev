@@ -166,8 +166,8 @@ public class Crawler implements RequestFactory, ParserFactory, HandlerFactory, G
 
     public static void main(String[] args) throws Exception {
 
-        Crawler crawler = new Crawler("hdfs://localhost:9000/cluster9");
-        //Crawler crawler = new Crawler("/home/hu/data/cluster4");
+       // Crawler crawler = new Crawler("hdfs://localhost:9000/cluster9");
+        Crawler crawler = new Crawler("/home/hu/data/cluster4");
         crawler.addSeed("http://www.xinhuanet.com/");
         
         crawler.start(50);
